@@ -44,6 +44,10 @@ Open a command prompt (cmd) wherever you downloaded IcarusResourceRespawn and ru
 IcarusResourceRespawn %localappdata%\Icarus\Saved\PlayerData\[your steam id]]\Prospects\[your prospect file name].json
 ```
 
+_or_
+
+Instead of running from a command prompt, you can drag your prospect save file and drop it onto IcarusResourceRespawn.exe. However, the window won't stay open when it's done running to show whether any errors happened if you do it this way.
+
 ## How to Build
 
 If you want to build, from source, follow these steps.
