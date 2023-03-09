@@ -30,7 +30,7 @@ The normal location for these files is:
 %localappdata%\Icarus\Saved\PlayerData\[your steam id]]\Prospects
 ```
 
-If you are running a dedicated server, the save file location may be different, depending on how the server was installed. If it is not in the above location, then it is probably within your dedicated server install directory under:
+If you are running a dedicated server, the save file location will be different and may vary depending where your server is hosted. You will need to download the save file if it is hosted remotely, modify it, then reupload it. If your server is self hosted, the location for save files should be inside your server install directory at:
 ```
 Icarus/Saved/PlayerData/DedicatedServer/Prospects
 ```
@@ -38,7 +38,12 @@ Icarus/Saved/PlayerData/DedicatedServer/Prospects
 ### Step 2: Backup your save files
 Make copies of your prospect save files, ideally in some other location so that your game doesn't show duplicate saves.
 
-### Step 3: Run IcarusResourceRespawn
+### Step 3: Circumvent Steam Cloud
+_This applies to local save files. If you are modifying a dedicated server save file, you can skip this step._
+
+When you modify a save file, Steam cloud will often end up undoing your changes next time you run the game as it will download the copy from the cloud. There are two ways to circumvent this issue. You can either disable Steam cloud for Icarus from the Steam library or you can have the game running and sitting at the main menu while you modify the save files.
+
+### Step 4: Run IcarusResourceRespawn
 _Make sure the prospect is not currently loaded in your game or dedicated server before doing this step._
 
 Open a command prompt (cmd) wherever you downloaded IcarusResourceRespawn and run the following command to modify your prospect. Substitute your save file location and file name.
