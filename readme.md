@@ -60,7 +60,7 @@ Instead of running from a command prompt, you can drag your prospect save file a
 If you want to build, from source, follow these steps.
 1. Clone the repo, including submodules.
     ```
-    git clone --recursive https://github.com/CrystalFerrai/IcarusSaveLib.git
+    git clone --recursive https://github.com/CrystalFerrai/IcarusResourceRespawn.git
     ```
 2. Open the file `IcarusResourceRespawn.sln` in Visual Studio.
 3. Right click the solution in the Solution Explorer panel and select "Restore NuGet Dependencies".
