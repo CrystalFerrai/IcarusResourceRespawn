@@ -1,4 +1,4 @@
-﻿// Copyright 2022 Crystal Ferrai
+﻿// Copyright 2023 Crystal Ferrai
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,9 +13,6 @@
 // limitations under the License.
 
 using IcarusSaveLib;
-using UeSaveGame;
-using UeSaveGame.PropertyTypes;
-using UeSaveGame.StructData;
 
 namespace IcarusResourceRespawn
 {
@@ -23,24 +20,79 @@ namespace IcarusResourceRespawn
 	{
 		private static int Main(string[] args)
 		{
-			if (args.Length < 1)
+			IReadOnlyList<string> remainingArgs;
+			RespawnOptions options = RespawnOptions.ParseCommandLine(args, out remainingArgs);
+
+			if (!options.Any() || remainingArgs.Count < 1)
 			{
-				Console.Out.WriteLine("Usage: IcarusResourceRespawn path\n\n    path    The path to the prospect save json file to modify. Recommended to backup file first.");
-				return 0;
+				PrintUsage();
+				return OnExit(0);
 			}
 
-			if (!File.Exists(args[0]))
+			IEnumerable<string> unknownOptions = remainingArgs.Where(a => a.StartsWith('-'));
+			if (unknownOptions.Any())
 			{
-				Console.Error.WriteLine($"File not found or not accessible: {args[0]}");
-				return 1;
+				Console.Error.WriteLine($"Error: Unrecognized options: {string.Join(", ", unknownOptions)}");
+				return OnExit(1);
 			}
 
-			UpdateProspeect(args[0], Console.Out, Console.Error, Console.Out);
+			if (remainingArgs.Count > 1)
+			{
+				Console.Error.WriteLine("Error: Too many parameters");
+				return OnExit(1);
+			}
 
-			return 0;
+			string prospectPath = remainingArgs[0];
+
+			if (!File.Exists(prospectPath))
+			{
+				Console.Error.WriteLine($"Error: File not found or not accessible: {prospectPath}");
+				return OnExit(1);
+			}
+
+			bool success;
+			try
+			{
+				success = UpdateProspect(prospectPath, options, Console.Out, Console.Error, Console.Out);
+			}
+			catch (Exception ex)
+			{
+				Console.Error.WriteLine($"[Error] {ex.GetType().FullName}: {ex.Message}");
+				success = false;
+			}
+
+			if (success)
+			{
+				Console.Out.WriteLine("Done.");
+			}
+
+			return OnExit(success ? 0 : 1);
 		}
 
-		private static void UpdateProspeect(string path, TextWriter outputLog, TextWriter errorLog, TextWriter warningLog)
+		private static int OnExit(int code)
+		{
+			if (System.Diagnostics.Debugger.IsAttached)
+			{
+				Console.ReadKey();
+			}
+			return code;
+		}
+
+		private static void PrintUsage()
+		{
+			string optionIndent = "    ";
+			Console.Out.WriteLine($"Usage: IcarusResourceRespawn [options] path\n");
+			RespawnOptions.PrintCommandLineOptions(Console.Out, optionIndent);
+			Console.Out.WriteLine($"\n{optionIndent}{"path",-RespawnOptions.MaxOptionStringLength}  The path to the prospect save json file to modify. Recommended to backup file first.\n");
+			Console.Out.WriteLine("Note: Must select at least one resource type to respawn.");
+
+			if (System.Diagnostics.Debugger.IsAttached)
+			{
+				Console.ReadKey();
+			}
+		}
+
+		private static bool UpdateProspect(string path, RespawnOptions options, TextWriter outputLog, TextWriter errorLog, TextWriter warningLog)
 		{
 			ProspectSave? prospect;
 
@@ -56,108 +108,17 @@ namespace IcarusResourceRespawn
 			catch (Exception ex)
 			{
 				errorLog.Write($"Error reading prospect file. [{ex.GetType().FullName}] {ex.Message}");
-				return;
+				return false;
 			}
 
 			if (prospect == null)
 			{
 				errorLog.Write("Error reading prospect file. Could not load Json.");
-				return;
+				return false;
 			}
 
-			ArrayProperty? stateRecorderBlobs = prospect.ProspectData[0] as ArrayProperty;
-			if (stateRecorderBlobs?.Value == null)
-			{
-				errorLog.Write("Error reading prospect file. Failed to locate state recorders.");
-				return;
-			}
-
-			outputLog.WriteLine("Modifying prospect...");
-
-			HashSet<string> recordersToRemove = new()
-			{
-				"/Script/Icarus.TreeRecorderComponent",
-				"/Script/Icarus.VoxelRecorderComponent"
-			};
-
-			List<UProperty> newBlobs = new();
-			foreach (UProperty prop in stateRecorderBlobs.Value)
-			{
-				PropertiesStruct? structData = (PropertiesStruct?)prop.Value;
-				if (structData == null)
-				{
-					errorLog.WriteLine("[Error] Failed to read prospect. A state recorder component has an invalid value.");
-					return;
-				}
-
-				StrProperty? nameProp = (StrProperty)structData.Properties[0];
-				if (nameProp?.Value == null)
-				{
-					errorLog.WriteLine("[Error] Failed to read prospect. A state recorder component has an invalid or missing name.");
-					return;
-				}
-
-				if (!recordersToRemove.Contains(nameProp.Value))
-				{
-					newBlobs.Add(prop);
-
-					if (nameProp.Value == "/Script/Icarus.FLODTileRecorderComponent")
-					{
-						const string FoliageRecordWarning = "[Warning] Could not read a foliage recorder record. This might prevent some resources from being respawned.";
-
-						IList<UProperty> recorderProperties = ProspectSerlializationUtil.DeserializeRecorderData(structData.Properties[1]);
-
-						foreach (UProperty recorderProp in recorderProperties)
-						{
-							if (recorderProp.Name != "Record") continue;
-
-							PropertiesStruct? recordStruct = (PropertiesStruct?)recorderProp.Value;
-							if (recordStruct == null)
-							{
-								warningLog.WriteLine(FoliageRecordWarning);
-								continue;
-							}
-
-							foreach (UProperty recordArrayProp in recordStruct.Properties)
-							{
-								if (recordArrayProp.Name != "Records") continue;
-
-								ArrayProperty recordArray = (ArrayProperty)recordArrayProp;
-								if (recordArray.Value == null)
-								{
-									warningLog.WriteLine(FoliageRecordWarning);
-									continue;
-								}
-
-								foreach (UProperty recordProp in recordArray.Value)
-								{
-									PropertiesStruct? recordPropertiesStruct = (PropertiesStruct?)recordProp.Value;
-									if (recordPropertiesStruct == null)
-									{
-										warningLog.WriteLine(FoliageRecordWarning);
-										continue;
-									}
-
-									foreach (UProperty recordDataProp in recordPropertiesStruct.Properties)
-									{
-										if (recordDataProp.Name != "DestroyedInstanceIndices") continue;
-
-										recordDataProp.Value = Array.Empty<UProperty>();
-
-										break;
-									}
-								}
-								break;
-							}
-							break;
-						}
-
-						structData.Properties[1] = ProspectSerlializationUtil.SerializeRecorderData(recorderProperties);
-					}
-				}
-			}
-
-			stateRecorderBlobs.Value = newBlobs.ToArray();
+			ResourceRespawner respawner = new(outputLog, errorLog, warningLog);
+			respawner.Run(prospect, options);
 
 			outputLog.WriteLine("Saving prospect...");
 
@@ -165,6 +126,8 @@ namespace IcarusResourceRespawn
 			{
 				prospect.Save(file);
 			}
+
+			return true;
 		}
 	}
 }

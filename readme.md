@@ -48,12 +48,17 @@ _Make sure the prospect is not currently loaded in your game or dedicated server
 
 Open a command prompt (cmd) wherever you downloaded IcarusResourceRespawn and run the following command to modify your prospect. Substitute your save file location and file name.
 ```
-IcarusResourceRespawn %localappdata%\Icarus\Saved\PlayerData\[your steam id]]\Prospects\[your prospect file name].json
+IcarusResourceRespawn -f -t %localappdata%\Icarus\Saved\PlayerData\[your steam id]]\Prospects\[your prospect file name].json
 ```
 
-_or_
-
-Instead of running from a command prompt, you can drag your prospect save file and drop it onto IcarusResourceRespawn.exe. However, the window won't stay open when it's done running to show whether any errors happened if you do it this way.
+The above command respawns foliage (-f) and trees (-t). You can add more options for additional resource types.
+```
+-f  Respawn bushes, berries, crops, etc.
+-t  Respawn trees
+-v  Respawn minable ores and rocks
+-b  Respawn obsidian, clay, scoria
+-d  Re-randomize deep ore deposits (will disconnect existing miners)
+```
 
 ## How to Build
 
