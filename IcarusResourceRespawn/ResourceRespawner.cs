@@ -13,9 +13,9 @@
 // limitations under the License.
 
 using IcarusSaveLib;
+using UeSaveGame;
 using UeSaveGame.PropertyTypes;
 using UeSaveGame.StructData;
-using UeSaveGame;
 
 namespace IcarusResourceRespawn
 {
@@ -43,10 +43,16 @@ namespace IcarusResourceRespawn
 
 			mOutputLog.WriteLine("Modifying prospect...");
 
+			const string TreeRecorderComponent = "/Script/Icarus.TreeRecorderComponent";
+			const string VoxelRecorderComponent = "/Script/Icarus.VoxelRecorderComponent";
+			const string RockBaseRecorderComponent = "/Script/Icarus.RockBaseRecorderComponent";
+
 			HashSet<string> recordersToRemove = new();
-			if (options.Trees) recordersToRemove.Add("/Script/Icarus.TreeRecorderComponent");
-			if (options.Voxels) recordersToRemove.Add("/Script/Icarus.VoxelRecorderComponent");
-			if (options.Breakables) recordersToRemove.Add("/Script/Icarus.RockBaseRecorderComponent");
+			if (options.Trees) recordersToRemove.Add(TreeRecorderComponent);
+			if (options.Voxels) recordersToRemove.Add(VoxelRecorderComponent);
+			if (options.Breakables) recordersToRemove.Add(RockBaseRecorderComponent);
+
+			int foliageCount = 0, treeCount = 0, voxelCount = 0, breakableCount = 0, deepOreCount = 0, deepIceCount = 0;
 
 			List<UProperty> newBlobs = new();
 			foreach (UProperty prop in stateRecorderBlobs.Value)
@@ -65,19 +71,45 @@ namespace IcarusResourceRespawn
 					return;
 				}
 
-				if (!recordersToRemove.Contains(nameProp.Value))
+				if (recordersToRemove.Contains(nameProp.Value))
+				{
+					switch (nameProp.Value)
+					{
+						case TreeRecorderComponent:
+							++treeCount;
+							break;
+						case VoxelRecorderComponent:
+							++voxelCount;
+							break;
+						case RockBaseRecorderComponent:
+							++breakableCount;
+							break;
+					}
+				}
+				else
 				{
 					bool shouldKeep = true;
 
 					if (options.Foliage && nameProp.Value == "/Script/Icarus.FLODTileRecorderComponent")
 					{
-						ResetFoliage(structData);
+						ResetFoliage(structData, ref foliageCount);
 					}
-					else if (options.DeepOre && nameProp.Value == "/Script/Icarus.ResourceDepositRecorderComponent")
+					else if (nameProp.Value == "/Script/Icarus.ResourceDepositRecorderComponent")
 					{
-						if (!IsExoticDeposit(structData))
+						ResourceDepositType depositType;
+						shouldKeep = ShouldKeepResourceDeposit(structData, options, out depositType);
+
+						if (!shouldKeep)
 						{
-							shouldKeep = false;
+							switch (depositType)
+							{
+								case ResourceDepositType.Ore:
+									++deepOreCount;
+									break;
+								case ResourceDepositType.Ice:
+									++deepIceCount;
+									break;
+							}
 						}
 					}
 
@@ -89,9 +121,35 @@ namespace IcarusResourceRespawn
 			}
 
 			stateRecorderBlobs.Value = newBlobs.ToArray();
+
+			mOutputLog.WriteLine("Resources reset/respawned:");
+			if (options.Foliage)
+			{
+				mOutputLog.WriteLine($"  {foliageCount} foliage");
+			}
+			if (options.Trees)
+			{
+				mOutputLog.WriteLine($"  {treeCount} trees");
+			}
+			if (options.Voxels)
+			{
+				mOutputLog.WriteLine($"  {voxelCount} voxels");
+			}
+			if (options.Breakables)
+			{
+				mOutputLog.WriteLine($"  {breakableCount} breakables");
+			}
+			if (options.DeepOre)
+			{
+				mOutputLog.WriteLine($"  {deepOreCount} deep ore deposits");
+			}
+			if (options.DeepIce)
+			{
+				mOutputLog.WriteLine($"  {deepIceCount} super cooled ice deposits");
+			}
 		}
 
-		private void ResetFoliage(PropertiesStruct structData)
+		private void ResetFoliage(PropertiesStruct structData, ref int removedCount)
 		{
 			const string FoliageRecordWarning = "[Warning] Could not read a foliage recorder record. This might prevent some foliage resources from being respawned.";
 
@@ -132,6 +190,7 @@ namespace IcarusResourceRespawn
 						{
 							if (recordDataProp.Name != "DestroyedInstanceIndices") continue;
 
+							removedCount += ((ArrayProperty)recordDataProp).Value?.Length ?? 0;
 							recordDataProp.Value = Array.Empty<UProperty>();
 
 							break;
@@ -145,14 +204,54 @@ namespace IcarusResourceRespawn
 			structData.Properties[1] = ProspectSerlializationUtil.SerializeRecorderData(recorderProperties);
 		}
 
-		private static bool IsExoticDeposit(PropertiesStruct structData)
+		private bool ShouldKeepResourceDeposit(PropertiesStruct structData, RespawnOptions options, out ResourceDepositType depositType)
 		{
+			if (!options.DeepOre && !options.DeepIce)
+			{
+				depositType = ResourceDepositType.Unknown;
+				return true;
+			}
+
 			IList<UProperty> recorderProperties = ProspectSerlializationUtil.DeserializeRecorderData(structData.Properties[1]);
 
 			// TODO: Update StrProperty to NameProperty when upgrading to newer version of UeSaveGame
 			StrProperty? resourceTypeProp = recorderProperties.FirstOrDefault(p => p.Name.Value == "ResourceDTKey") as StrProperty;
 
-			return resourceTypeProp is not null && resourceTypeProp.Value!.Value == "Exotic";
+			if (resourceTypeProp is null)
+			{
+				// Should not happen, but leave it alone if we don't understand it
+				mWarningLog.WriteLine("Encountered a resource deposit with no type. This deposit will not be removed.");
+
+				depositType = ResourceDepositType.Unknown;
+				return true;
+			}
+
+			string resourceType = resourceTypeProp.Value!.Value;
+
+			if (resourceType.Equals("Exotic", StringComparison.OrdinalIgnoreCase) ||
+				resourceType.Equals("Exotic_Red_Raw", StringComparison.OrdinalIgnoreCase))
+			{
+				// Never remove exotic deposits
+				depositType = ResourceDepositType.Exotic;
+				return true;
+			}
+
+			if (resourceType.Equals("Super_Cooled_Ice", StringComparison.OrdinalIgnoreCase))
+			{
+				depositType = ResourceDepositType.Ice;
+				return !options.DeepIce;
+			}
+
+			depositType = ResourceDepositType.Ore;
+			return !options.DeepOre;
+		}
+
+		private enum ResourceDepositType
+		{
+			Unknown,
+			Ore,
+			Ice,
+			Exotic
 		}
 	}
 }

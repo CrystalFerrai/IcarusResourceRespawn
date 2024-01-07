@@ -27,7 +27,7 @@ You should have some familiarity with using command line programs or you may str
 ### Step 1: Locate your prospect save file
 The normal location for these files is:
 ```
-%localappdata%\Icarus\Saved\PlayerData\[your steam id]]\Prospects
+%localappdata%\Icarus\Saved\PlayerData\[your steam id]\Prospects
 ```
 
 If you are running a dedicated server, the save file location will be different and may vary depending where your server is hosted. You will need to download the save file if it is hosted remotely, modify it, then reupload it. If your server is self hosted, the location for save files should be inside your server install directory at:
@@ -48,16 +48,17 @@ _Make sure the prospect is not currently loaded in your game or dedicated server
 
 Open a command prompt (cmd) wherever you downloaded IcarusResourceRespawn and run the following command to modify your prospect. Substitute your save file location and file name.
 ```
-IcarusResourceRespawn -f -t %localappdata%\Icarus\Saved\PlayerData\[your steam id]]\Prospects\[your prospect file name].json
+IcarusResourceRespawn -f -t %localappdata%\Icarus\Saved\PlayerData\[your steam id]\Prospects\[your prospect file name].json
 ```
 
 The above command respawns foliage (-f) and trees (-t). You can add more options for additional resource types.
 ```
--f  Respawn bushes, berries, crops, etc.
--t  Respawn trees
--v  Respawn minable ores and rocks
--b  Respawn obsidian, clay, scoria
--d  Re-randomize deep ore deposits (will disconnect existing miners)
+-f Respawn bushes, berries, crops, etc.
+-t Respawn trees
+-v Respawn minable ores and rocks
+-b Respawn obsidian, clay, scoria
+-d Remove deep ore deposits so they respawn, possibly with different ore types (will disconnect existing drills)
+-i Remove super cooled ice deposits so they respawn (will disconnect existing borers)
 ```
 
 ## How to Build

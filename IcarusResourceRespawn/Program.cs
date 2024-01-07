@@ -85,11 +85,6 @@ namespace IcarusResourceRespawn
 			RespawnOptions.PrintCommandLineOptions(Console.Out, optionIndent);
 			Console.Out.WriteLine($"\n{optionIndent}{"path",-RespawnOptions.MaxOptionStringLength}  The path to the prospect save json file to modify. Recommended to backup file first.\n");
 			Console.Out.WriteLine("Note: Must select at least one resource type to respawn.");
-
-			if (System.Diagnostics.Debugger.IsAttached)
-			{
-				Console.ReadKey();
-			}
 		}
 
 		private static bool UpdateProspect(string path, RespawnOptions options, TextWriter outputLog, TextWriter errorLog, TextWriter warningLog)

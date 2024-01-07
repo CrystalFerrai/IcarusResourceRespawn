@@ -26,15 +26,18 @@ namespace IcarusResourceRespawn
 
 		public bool DeepOre { get; }
 
+		public bool DeepIce { get; }
+
 		public const int MaxOptionStringLength = 15; // Length of "-breakables"
 
-		public RespawnOptions(bool foliage, bool trees, bool voxels, bool breakables, bool deepOre)
+		public RespawnOptions(bool foliage, bool trees, bool voxels, bool breakables, bool deepOre, bool deepIce)
 		{
 			Foliage = foliage;
 			Trees = trees;
 			Voxels = voxels;
 			Breakables = breakables;
 			DeepOre = deepOre;
+			DeepIce = deepIce;
 		}
 
 		public static void PrintCommandLineOptions(TextWriter writer, string indent)
@@ -43,14 +46,16 @@ namespace IcarusResourceRespawn
 			writer.WriteLine($"{indent}-t, -trees       Respawn trees\n");
 			writer.WriteLine($"{indent}-v, -voxels      Respawn minable ores and rocks\n");
 			writer.WriteLine($"{indent}-b, -breakables  Respawn obsidian, clay, scoria\n");
-			writer.WriteLine($"{indent}-d, -deepore     Re-randomize deep ore deposits (will disconnect existing miners)");
+			writer.WriteLine($"{indent}-d, -deepore     Remove deep ore deposits so they respawn, possibly with different ore types (will");
+			writer.WriteLine($"{indent}                 disconnect existing drills)\n");
+			writer.WriteLine($"{indent}-i, -deepice     Remove super cooled ice deposits so they respawn (will disconnect existing borers)");
 		}
 
 		public static RespawnOptions ParseCommandLine(IReadOnlyList<string> commandLine, out IReadOnlyList<string> remainingCommandLine)
 		{
 			List<string> remaining = new();
 
-			bool foliage = false, trees = false, voxels = false, breakables = false, deepOre = false;
+			bool foliage = false, trees = false, voxels = false, breakables = false, deepOre = false, deepIce = false;
 
 			for (int i = 0; i < commandLine.Count; ++i)
 			{
@@ -84,6 +89,10 @@ namespace IcarusResourceRespawn
 					case "deepore":
 						deepOre = true;
 						break;
+					case "i":
+					case "deepice":
+						deepIce = true;
+						break;
 					default:
 						remaining.Add(commandLine[i]);
 						break;
@@ -91,12 +100,12 @@ namespace IcarusResourceRespawn
 			}
 
 			remainingCommandLine = remaining;
-			return new RespawnOptions(foliage, trees, voxels, breakables, deepOre);
+			return new RespawnOptions(foliage, trees, voxels, breakables, deepOre, deepIce);
 		}
 
 		public bool Any()
 		{
-			return Foliage || Trees || Voxels || Breakables || DeepOre;
+			return Foliage || Trees || Voxels || Breakables || DeepOre || DeepIce;
 		}
 	}
 }
