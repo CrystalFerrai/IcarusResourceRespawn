@@ -4,12 +4,7 @@ A command line program that modifies an Icarus game save to respawn all resource
 
 ## Features
 
-This prgram modifies a prospect save file and respawns the following types of resources:
-* Voxel nodes - includes ores and rocks. May include cave entrance blockers, haven't checked.
-* Trees
-* Foliage - includes things like food plants and bushes
-
-This should work for any type of prospect. It doesn't matter if it is a mission or an open world.
+This program modifies a prospect save file and respawns various resources. This should work for any type of prospect. It doesn't matter if it is a mission or an open world.
 
 ## Releases
 
