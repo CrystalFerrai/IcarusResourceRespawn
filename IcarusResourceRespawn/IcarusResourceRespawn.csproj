@@ -9,13 +9,13 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>2.1.0.0</Version>
-    <AssemblyVersion>2.1.0.0</AssemblyVersion>
+    <Version>2.1.1.0</Version>
+    <AssemblyVersion>2.1.1.0</AssemblyVersion>
     <Title>IcarusResourceRespawn</Title>
     <Product>IcarusResourceRespawn</Product>
     <Description>Modifies Icarus save file to respawn resources</Description>
     <Company>Crystal</Company>
-    <Copyright>Copyright ©2023 Crystal Ferrai</Copyright>
+    <Copyright>Copyright ©2025 Crystal Ferrai</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

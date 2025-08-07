@@ -1,4 +1,4 @@
-﻿// Copyright 2023 Crystal Ferrai
+﻿// Copyright 2025 Crystal Ferrai
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ namespace IcarusResourceRespawn
 
 		public void Run(ProspectSave prospect, RespawnOptions options)
 		{
-			ArrayProperty? stateRecorderBlobs = prospect.ProspectData[0] as ArrayProperty;
+			ArrayProperty? stateRecorderBlobs = prospect.ProspectData[0].Property as ArrayProperty;
 			if (stateRecorderBlobs?.Value == null)
 			{
 				mErrorLog.Write("Error reading prospect. Failed to locate state recorder array at index 0.");
@@ -54,8 +54,8 @@ namespace IcarusResourceRespawn
 
 			int foliageCount = 0, treeCount = 0, voxelCount = 0, breakableCount = 0, deepOreCount = 0, deepIceCount = 0;
 
-			List<UProperty> newBlobs = new();
-			foreach (UProperty prop in stateRecorderBlobs.Value)
+			List<FProperty> newBlobs = new();
+			foreach (FProperty prop in stateRecorderBlobs.Value)
 			{
 				PropertiesStruct? structData = (PropertiesStruct?)prop.Value;
 				if (structData == null)
@@ -64,7 +64,7 @@ namespace IcarusResourceRespawn
 					return;
 				}
 
-				StrProperty? nameProp = (StrProperty?)structData.Properties[0];
+				StrProperty? nameProp = (StrProperty?)structData.Properties[0].Property;
 				if (nameProp?.Value == null)
 				{
 					mErrorLog.WriteLine("[Error] Failed to read prospect. A state recorder component has an invalid or missing name.");
@@ -153,31 +153,31 @@ namespace IcarusResourceRespawn
 		{
 			const string FoliageRecordWarning = "[Warning] Could not read a foliage recorder record. This might prevent some foliage resources from being respawned.";
 
-			IList<UProperty> recorderProperties = ProspectSerlializationUtil.DeserializeRecorderData(structData.Properties[1]);
+			IList<FPropertyTag> recorderProperties = ProspectSerlializationUtil.DeserializeRecorderData(structData.Properties[1]);
 
-			foreach (UProperty recorderProp in recorderProperties)
+			foreach (FPropertyTag recorderProp in recorderProperties)
 			{
 				if (recorderProp.Name != "Record") continue;
 
-				PropertiesStruct? recordStruct = (PropertiesStruct?)recorderProp.Value;
+				PropertiesStruct? recordStruct = (PropertiesStruct?)recorderProp.Property?.Value;
 				if (recordStruct == null)
 				{
 					mWarningLog.WriteLine(FoliageRecordWarning);
 					continue;
 				}
 
-				foreach (UProperty recordArrayProp in recordStruct.Properties)
+				foreach (FPropertyTag recordArrayProp in recordStruct.Properties)
 				{
 					if (recordArrayProp.Name != "Records") continue;
 
-					ArrayProperty recordArray = (ArrayProperty)recordArrayProp;
+					ArrayProperty recordArray = (ArrayProperty)recordArrayProp.Property!;
 					if (recordArray.Value == null)
 					{
 						mWarningLog.WriteLine(FoliageRecordWarning);
 						continue;
 					}
 
-					foreach (UProperty recordProp in recordArray.Value)
+					foreach (FProperty recordProp in recordArray.Value)
 					{
 						PropertiesStruct? recordPropertiesStruct = (PropertiesStruct?)recordProp.Value;
 						if (recordPropertiesStruct == null)
@@ -186,12 +186,12 @@ namespace IcarusResourceRespawn
 							continue;
 						}
 
-						foreach (UProperty recordDataProp in recordPropertiesStruct.Properties)
+						foreach (FPropertyTag recordDataProp in recordPropertiesStruct.Properties)
 						{
 							if (recordDataProp.Name != "DestroyedInstanceIndices") continue;
 
-							removedCount += ((ArrayProperty)recordDataProp).Value?.Length ?? 0;
-							recordDataProp.Value = Array.Empty<UProperty>();
+							removedCount += ((ArrayProperty)recordDataProp.Property!).Value?.Length ?? 0;
+							recordDataProp.Property!.Value = Array.Empty<FProperty>();
 
 							break;
 						}
@@ -201,7 +201,7 @@ namespace IcarusResourceRespawn
 				break;
 			}
 
-			structData.Properties[1] = ProspectSerlializationUtil.SerializeRecorderData(recorderProperties);
+			structData.Properties[1] = ProspectSerlializationUtil.SerializeRecorderData(structData.Properties[1], recorderProperties);
 		}
 
 		private bool ShouldKeepResourceDeposit(PropertiesStruct structData, RespawnOptions options, out ResourceDepositType depositType)
@@ -212,10 +212,10 @@ namespace IcarusResourceRespawn
 				return true;
 			}
 
-			IList<UProperty> recorderProperties = ProspectSerlializationUtil.DeserializeRecorderData(structData.Properties[1]);
+			IList<FPropertyTag> recorderProperties = ProspectSerlializationUtil.DeserializeRecorderData(structData.Properties[1]);
 
 			// TODO: Update StrProperty to NameProperty when upgrading to newer version of UeSaveGame
-			StrProperty? resourceTypeProp = recorderProperties.FirstOrDefault(p => p.Name.Value == "ResourceDTKey") as StrProperty;
+			StrProperty? resourceTypeProp = recorderProperties.FirstOrDefault(p => p.Name.Value == "ResourceDTKey")?.Property as StrProperty;
 
 			if (resourceTypeProp is null)
 			{
