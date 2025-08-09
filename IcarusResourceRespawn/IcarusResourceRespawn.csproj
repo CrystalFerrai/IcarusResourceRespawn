@@ -2,20 +2,26 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>2.1.1.0</Version>
-    <AssemblyVersion>2.1.1.0</AssemblyVersion>
     <Title>IcarusResourceRespawn</Title>
     <Product>IcarusResourceRespawn</Product>
+	<ProductName>IcarusResourceRespawn</ProductName>
     <Description>Modifies Icarus save file to respawn resources</Description>
     <Company>Crystal</Company>
-    <Copyright>Copyright ©2025 Crystal Ferrai</Copyright>
+    <Authors>Crystal Ferrai</Authors>
+    <Copyright>Copyright © 2025 Crystal Ferrai</Copyright>
+	<Version>2.2.0.0</Version>
+	<ProductVersion>$(Version)</ProductVersion>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+	<InformationalVersion>$(Version)</InformationalVersion>
+	<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>
