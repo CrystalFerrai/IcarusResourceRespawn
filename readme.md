@@ -50,12 +50,11 @@ IcarusResourceRespawn -f -t %localappdata%\Icarus\Saved\PlayerData\[your steam i
 
 The above command respawns foliage (-f) and trees (-t). You can add more options for additional resource types.
 ```
--f Respawn bushes, berries, crops, etc.
--t Respawn trees
+-f Respawn trees, bushes, berries, etc.
 -v Respawn minable ores and rocks
 -b Respawn obsidian, clay, scoria
--d Remove deep ore deposits so they respawn, possibly with different ore types (will disconnect existing drills)
--i Remove super cooled ice deposits so they respawn (will disconnect existing borers)
+-d Remove deep ore deposits so they respawn, possibly with different ore types (may disconnect existing drills)
+-i Remove super cooled ice deposits so they respawn (may disconnect existing borers)
 ```
 
 ## How to Build

@@ -45,14 +45,30 @@ namespace IcarusResourceRespawn
 
 			const string TreeRecorderComponent = "/Script/Icarus.TreeRecorderComponent";
 			const string VoxelRecorderComponent = "/Script/Icarus.VoxelRecorderComponent";
+			const string SpawnedVoxelRecorderComponent = "/Script/Icarus.SpawnedVoxelRecorderComponent";
 			const string RockBaseRecorderComponent = "/Script/Icarus.RockBaseRecorderComponent";
 
 			HashSet<string> recordersToRemove = new();
-			if (options.Trees) recordersToRemove.Add(TreeRecorderComponent);
-			if (options.Voxels) recordersToRemove.Add(VoxelRecorderComponent);
-			if (options.Breakables) recordersToRemove.Add(RockBaseRecorderComponent);
+			if (options.Foliage)
+			{
+				// Tree recorders only appear in old prospect saves from before tree respawning was implemented.
+				// In newer saves, trees are handled by foliage recorders. We will still remove tree recorders if
+				// they exist.
+				recordersToRemove.Add(TreeRecorderComponent);
+			}
+			if (options.Voxels)
+			{
+				recordersToRemove.Add(VoxelRecorderComponent);
 
-			int foliageCount = 0, treeCount = 0, voxelCount = 0, breakableCount = 0, deepOreCount = 0, deepIceCount = 0;
+				// Also remove thumper generated voxels to prevent overlapping nodes when originals are respawned
+				recordersToRemove.Add(SpawnedVoxelRecorderComponent);
+			}
+			if (options.Breakables)
+			{
+				recordersToRemove.Add(RockBaseRecorderComponent);
+			}
+
+			int foliageCount = 0, voxelCount = 0, breakableCount = 0, deepOreCount = 0, deepIceCount = 0;
 
 			List<FProperty> newBlobs = new();
 			foreach (FProperty prop in stateRecorderBlobs.Value)
@@ -76,9 +92,10 @@ namespace IcarusResourceRespawn
 					switch (nameProp.Value)
 					{
 						case TreeRecorderComponent:
-							++treeCount;
+							++foliageCount;
 							break;
 						case VoxelRecorderComponent:
+						case SpawnedVoxelRecorderComponent:
 							++voxelCount;
 							break;
 						case RockBaseRecorderComponent:
@@ -94,7 +111,8 @@ namespace IcarusResourceRespawn
 					{
 						ResetFoliage(structData, ref foliageCount);
 					}
-					else if (nameProp.Value == "/Script/Icarus.ResourceDepositRecorderComponent")
+					else if (nameProp.Value == "/Script/Icarus.ResourceDepositRecorderComponent"
+						|| nameProp.Value == "/Script/Icarus.ResourceDepositIceRecorderComponent")
 					{
 						ResourceDepositType depositType;
 						shouldKeep = ShouldKeepResourceDeposit(structData, options, out depositType);
@@ -126,10 +144,6 @@ namespace IcarusResourceRespawn
 			if (options.Foliage)
 			{
 				mOutputLog.WriteLine($"  {foliageCount} foliage");
-			}
-			if (options.Trees)
-			{
-				mOutputLog.WriteLine($"  {treeCount} trees");
 			}
 			if (options.Voxels)
 			{
@@ -214,8 +228,7 @@ namespace IcarusResourceRespawn
 
 			IList<FPropertyTag> recorderProperties = ProspectSerlializationUtil.DeserializeRecorderData(structData.Properties[1]);
 
-			// TODO: Update StrProperty to NameProperty when upgrading to newer version of UeSaveGame
-			StrProperty? resourceTypeProp = recorderProperties.FirstOrDefault(p => p.Name.Value == "ResourceDTKey")?.Property as StrProperty;
+			NameProperty? resourceTypeProp = recorderProperties.FirstOrDefault(p => p.Name.Value == "ResourceDTKey")?.Property as NameProperty;
 
 			if (resourceTypeProp is null)
 			{
