@@ -21,9 +21,9 @@ namespace IcarusResourceRespawn
 {
 	internal class ResourceRespawner
 	{
-		TextWriter mOutputLog;
-		TextWriter mErrorLog;
-		TextWriter mWarningLog;
+		private readonly TextWriter mOutputLog;
+		private readonly TextWriter mErrorLog;
+		private readonly TextWriter mWarningLog;
 
 		public ResourceRespawner(TextWriter outputLog, TextWriter errorLog, TextWriter warningLog)
 		{
