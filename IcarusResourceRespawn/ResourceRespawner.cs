@@ -45,7 +45,6 @@ namespace IcarusResourceRespawn
 
 			const string TreeRecorderComponent = "/Script/Icarus.TreeRecorderComponent";
 			const string VoxelRecorderComponent = "/Script/Icarus.VoxelRecorderComponent";
-			const string SpawnedVoxelRecorderComponent = "/Script/Icarus.SpawnedVoxelRecorderComponent";
 			const string RockBaseRecorderComponent = "/Script/Icarus.RockBaseRecorderComponent";
 
 			HashSet<string> recordersToRemove = new();
@@ -59,9 +58,6 @@ namespace IcarusResourceRespawn
 			if (options.Voxels)
 			{
 				recordersToRemove.Add(VoxelRecorderComponent);
-
-				// Also remove thumper generated voxels to prevent overlapping nodes when originals are respawned
-				recordersToRemove.Add(SpawnedVoxelRecorderComponent);
 			}
 			if (options.Breakables)
 			{
@@ -95,7 +91,6 @@ namespace IcarusResourceRespawn
 							++foliageCount;
 							break;
 						case VoxelRecorderComponent:
-						case SpawnedVoxelRecorderComponent:
 							++voxelCount;
 							break;
 						case RockBaseRecorderComponent:
